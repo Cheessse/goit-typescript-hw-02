@@ -1,35 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import "./App.css";
+import SearchBar from "./components/SearchBar/SearchBar";
+import { fetchImages } from "./api/images";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import Loader from "./components/Loader/Loader";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import ImageModal from "./components/ImageModal/ImageModal";
 
-function App() {
-  const [count, setCount] = useState(0)
+function App(): JSX.Element {
+  const [query, setQuery] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [images, setImages] = useState<any[]>([]);
+  const [totalResults, setTotalResults] = useState<number>(0);
+  const [isError, setError] = useState<string | null>(null);
+  const [isLoading, setLoading] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!query) return;
+    const load = async () => {
+      try {
+        setLoading(true);
+        const { results, total } = await fetchImages({ query, pageNumber: page });
+        if (total === 0) {
+          toast.error("Please enter the correct search value.");
+        }
+        setImages((prev) => [...prev, ...results]);
+        setTotalResults(total);
+      } catch (error) {
+        setError("Error fetching images. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [query, page]);
+
+  const handleSubmit = (query: string) => {
+    setImages([]);
+    setTotalResults(0);
+    setError(null);
+    setPage(1);
+    setLoading(false);
+    setQuery(query);
+  };
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
+  };
+
+  const modalOpen = (image: any) => {
+    setIsOpen(true);
+    setSelectedImage(image);
+  };
+
+  const modalClose = () => {
+    setIsOpen(false);
+    setSelectedImage(null);
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <SearchBar onSubmit={handleSubmit} />
+      {isLoading && <Loader />}
+      {isError && <ErrorMessage ErrorMessage={isError} />}
+      <ImageGallery images={images} onImageClick={modalOpen} />
+      {totalResults > 0 && images.length < totalResults && <LoadMoreBtn onClick={handleLoadMore} />}
+      <ImageModal images={selectedImage} isOpen={isOpen} onRequestClose={modalClose} />
+      <Toaster position="top-right" reverseOrder={false} />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
