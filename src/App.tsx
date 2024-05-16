@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import "./App.css";
 import SearchBar from "./components/SearchBar/SearchBar";
-import { fetchImages } from "./api/images";
+import { fetchImages, ImageData } from "./api/images";
 import ImageGallery from "./components/ImageGallery/ImageGallery";
 import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
 import Loader from "./components/Loader/Loader";
@@ -12,7 +12,7 @@ import ImageModal from "./components/ImageModal/ImageModal";
 function App(): JSX.Element {
   const [query, setQuery] = useState<string>("");
   const [page, setPage] = useState<number>(1);
-  const [images, setImages] = useState<any[]>([]);
+  const [images, setImages] = useState<ImageData[]>([]);
   const [totalResults, setTotalResults] = useState<number>(0);
   const [isError, setError] = useState<string | null>(null);
   const [isLoading, setLoading] = useState<boolean>(false);
